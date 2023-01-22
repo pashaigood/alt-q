@@ -1,7 +1,7 @@
 {
-  "name": "hello-next",
-  "displayName": "hello-next",
-  "description": "",
+  "name": "pashaigood.alt-q",
+  "displayName": "AltQ GPT Power",
+  "description": "GPT base helper for coding.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.74.0"
@@ -10,21 +10,34 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:hello-next.helloWorld"
+    "onCommand:pashaigood.alt-q.altQ",
+    "onCommand:quickInput.open"
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "icon": "icon.png",
     "commands": [
       {
-        "command": "hello-next.helloWorld",
-        "title": "Hello World"
+        "command": "pashaigood.alt-q.altQ",
+        "title": "AltQ"
+      },
+      {
+        "command": "quickInput.open",
+        "title": "AltQ: prompt"
       }
     ],
-    "keybindings": [{
-      "command": "hello-next.helloWorld",
-      "key": "alt+x",
-      "when": "editorTextFocus"
-    }]
+    "keybindings": [
+      {
+        "command": "quickInput.open",
+        "key": "alt+p",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "pashaigood.alt-q.altQ",
+        "key": "alt+q",
+        "when": "editorTextFocus"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

@@ -1,8 +1,11 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { getOpenAIAPIResponse } from './api';
+import { getOpenAIAPIResponse, getPlaygroundModel } from './api';
 import Deferred from './Deferred';
+import { getAbsolutePosition, getCurrentCommentBlock, getCurrentLineOffset, getNextLine, getTextAround, insertCharacter, moveCursorToEndOfLine, moveCursorToNextLine, moveCursorToStartOfNextLine, moveCursorToTheEndOfLine, putText, showPrompt } from './utils/editor';
+import { delay } from './utils/time';
+import typeText, { typeText2 } from './utils/typing';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -11,7 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('hello-next.helloWorld', () => {
+	let disposable = vscode.commands.registerCommand('pashaigood.alt-q.altQ', async () => {
 		// The code you place here will be executed every time your command is executed
 		// Display a message box to the user
 		// vscode.window.showInformationMessage('Hello World from hello-next!');
@@ -22,7 +25,6 @@ export function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
-
 		// Get the current selection
 		let selection = editor.selection;
 
@@ -31,61 +33,92 @@ export function activate(context: vscode.ExtensionContext) {
 
 		// console.log(editor.document.getText());
 
-		const model = 'text-davinci-003'//'text-davinci-003';//'text-davinci-002'
-		// const model = 'code-davinci-002'//'text-davinci-003';//'text-davinci-002'
-		// 		const prompt = 
-		// `
-		// You a coder helper, that write all required code.
-		// Current file name is ${fileName.split("\\").pop()}.
-		// The programming language is typescript.
-		// '''
-		// // Write a hello world.
-		// '''
-		// function HelloWorld() {
-		// 	console.log("Hello, world")
-		// }
-		// '''
-		// ${selectedText}
-		// `;
-		const promnt = selectedText;
+		const model = 'text-davinci-003'
+		// const model = 'code-davinci-002'
+		let prompt = selectedText.trim();
 
-		vscode.window.showInputBox({
-			placeHolder: 'Type something',
-			prompt: 'This is a prompt'
-		}).then(val => {
-			if (val) {
-				vscode.window.showInformationMessage(val);
+		let comment = getCurrentCommentBlock();
+		let cursor = {
+			start: getAbsolutePosition(selection.start),
+			end: getAbsolutePosition(selection.end)
+		};
+
+		if (comment && selectedText) {
+			prompt = prompt;
+			cursor = undefined!;
+		} else if (comment && !selectedText) {
+			prompt = comment.trim();
+			cursor = undefined!;
+		} else if (!comment && selectedText) {
+			const input = await showPrompt({
+				title: 'Enter prompt'
+			}) || '';
+
+			if (input) {
+				prompt = prompt + "\n //" + input;
+			} else {
+				prompt = '';
 			}
-		});
+		} else if(!selectedText) {
+			prompt = await showPrompt({
+				title: 'Enter prompt'
+			});
+		}
 
-		(async () => {
-			freez(editor);
-			try {
-				await getOpenAIAPIResponse(promnt, model).then(res => {
-					let editor = vscode.window.activeTextEditor;
-					if (!editor) {
-						return;
-					}
+		if (prompt.length === 0) {
+			return;
+		}
 
-					let selection = editor.selection;
+		freez(editor);
+		try {
+			const res = await getOpenAIAPIResponse(prompt, model, {
+				file: fileName,
+				fileContent: editor.document.getText(),
+				cursor
+			})
 
-					// Get the current selection
-
-					// Insert the text "Hello, World!" at the current selection
-					editor.edit(function (editBuilder) {
-						editBuilder.replace(selection, res);
-						// editBuilder.insert(selection.start, "Hello, World!");
-					});
-				})
-			} catch (e) {
-				vscode.window.showErrorMessage(e.message);
+			if (!selection.isEmpty) {
+				putText(res.trim(), selection);
+			} else {
+				moveCursorToTheEndOfLine();
+				let whitespace = getCurrentLineOffset();
+				insertCharacter("\n" + whitespace)
+				await delay(30);
+				
+				await typeText2(res.trim() + "\n").defer;
 			}
-			unfreez(editor);
-		})();
+		} catch (e) {
+			vscode.window.showErrorMessage((e as Error).message);
+		}
+		unfreez(editor);
 	});
 
 	context.subscriptions.push(disposable);
+
+	let disposable2 = vscode.commands.registerCommand('quickInput.open', openQuickInput);
+	context.subscriptions.push(disposable2);
 }
+
+function openQuickInput() {
+	vscode.window.showInputBox({
+		prompt: "Enter your desired input:"
+	}).then(async input => {
+		if (input) {
+			const result = await getPlaygroundModel(input);
+
+			const text = result;
+
+			let editor = vscode.window.activeTextEditor;
+			if (editor) {
+				let selection = editor.selection;
+				editor.edit(builder => {
+					builder.replace(selection, text);
+				});
+			}
+		}
+	});
+}
+
 
 // This method is called when your extension is deactivated
 export function deactivate() { }
@@ -127,15 +160,14 @@ let animation: DotElapsingAnimation;
 
 function freez(editor: vscode.TextEditor) {
 	// Disable user input
-	editor.options = {
-		// readOnly: true,
-		cursorStyle: vscode.TextEditorCursorStyle.Block
-	};
+	// editor.options = {
+	// 	// readOnly: true,
+	// 	cursorStyle: vscode.TextEditorCursorStyle.Block
+	// };
 
 	// Show a loading indicator
 	loadingIndicator = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
 	loadingIndicator.text = 'Code generation...';
-	loadingIndicator.backgroundColor = 'green';
 	loadingIndicator.show();
 
 	vscode.window.withProgress({
@@ -155,10 +187,10 @@ function freez(editor: vscode.TextEditor) {
 
 function unfreez(editor: vscode.TextEditor) {
 	// Enable user input
-	editor.options = {
-		// readOnly: false,
-		cursorStyle: vscode.TextEditorCursorStyle.Line
-	};
+	// editor.options = {
+	// 	// readOnly: false,
+	// 	cursorStyle: vscode.TextEditorCursorStyle.Line
+	// };
 
 	// Hide the loading indicator
 	loadingIndicator?.hide();
