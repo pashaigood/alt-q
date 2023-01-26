@@ -9,18 +9,15 @@ import { delay } from './utils/time';
 import typeText, { typeText2 } from './utils/typing';
 
 export function activate(context: vscode.ExtensionContext) {
-	let disposable = vscode.commands.registerCommand('pashaigood.alt-q.altQ', async () => {
+	let disposable = vscode.commands.registerCommand('alt-q.altQ', async () => {
 		await actionAltQ();
 	});
 
 	context.subscriptions.push(disposable);
 
-	disposable = vscode.commands.registerCommand('pashaigood.alt-q.altQDeep', async () => {
+	disposable = vscode.commands.registerCommand('alt-q.altQDeep', async () => {
 		await actionAltQ(true);
 	});
-
-	let disposable2 = vscode.commands.registerCommand('quickInput.open', openQuickInput);
-	context.subscriptions.push(disposable2);
 }
 
 async function actionAltQ(force: boolean = false) {
@@ -31,7 +28,9 @@ async function actionAltQ(force: boolean = false) {
 			title: "Please, provide you api kay first."
 		});
 		await updateConfig('apiKey', key);
-		await actionAltQ(force);
+		if (key?.length) {
+			await actionAltQ(force);
+		}
 	}
 }
 

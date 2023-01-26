@@ -97,10 +97,11 @@ ${SEPARATOR}`;
   //   command
   // });
 
-  console.log(command);
-  console.log("Prompt length", prompt.length);
-  console.log(prompt);
-  console.log(suffix);
+  // TODO: Show in develop
+  // console.log(command);
+  // console.log("Prompt length", prompt.length);
+  // console.log(prompt);
+  // console.log(suffix);
 
 
   const { data, ...rest } = await openai.createCompletion({
@@ -115,7 +116,8 @@ ${SEPARATOR}`;
     stop: [SEPARATOR],
   });
 
-  console.log(data, rest);
+  // TODO: Show in develop
+  // console.log(data, rest);
 
   let response = data.choices[0].text;
 

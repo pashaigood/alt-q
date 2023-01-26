@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 export function getConfig() {
-    return vscode.workspace.getConfiguration("pashaigood.alt-q");
+    return vscode.workspace.getConfiguration("alt-q");
 }
 
 export async function updateConfig(property: string, value: any) {

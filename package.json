@@ -1,6 +1,9 @@
 {
-  "name": "pashaigood.alt-q",
+  "name": "alt-q",
   "publisher": "pashaigood",
+  "icon": "icon.png",
+  "repository": "https://github.com/pashaigood/alt-q",
+  "bugs": "https://github.com/pashaigood/alt-q/issues",
   "displayName": "AltQ GPT Power",
   "description": "GPT base helper for coding.",
   "version": "0.0.1-alpha",
@@ -11,23 +14,22 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:pashaigood.alt-q.altQ",
-    "onCommand:pashaigood.alt-q.altQDeep"
+    "onCommand:alt-q.altQ",
+    "onCommand:alt-q.altQDeep"
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "icon": "icon.png",
     "configuration": {
       "title": "AltQ",
       "properties": {
-        "pashaigood.alt-q.apiKey": {
+        "alt-q.apiKey": {
           "type": "string",
           "title": "API Key",
           "default": "",
           "markdownDescription": "If you don't have a API key, please visit [openai.com](https://beta.openai.com/account/api-keys) and get a fresh one.",
           "description": "OpenIA API keys"
         },
-        "pashaigood.alt-q.useTheForce": {
+        "alt-q.useTheForce": {
           "type": "boolean",
           "title": "Always use the force",
           "default": false,
@@ -37,11 +39,11 @@
     },
     "commands": [
       {
-        "command": "pashaigood.alt-q.altQ",
+        "command": "alt-q.altQ",
         "title": "AltQ"
       },
       {
-        "command": "pashaigood.alt-q.altQDeep",
+        "command": "alt-q.altQDeep",
         "title": "AltQ: Deep think"
       },
       {
@@ -56,12 +58,12 @@
         "when": "editorTextFocus"
       },
       {
-        "command": "pashaigood.alt-q.altQ",
+        "command": "alt-q.altQ",
         "key": "alt+q",
         "when": "editorTextFocus"
       },
       {
-        "command": "pashaigood.alt-q.altQDeep",
+        "command": "alt-q.altQDeep",
         "key": "alt+shift+q",
         "when": "editorTextFocus"
       }

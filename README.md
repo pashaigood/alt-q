@@ -1,28 +1,31 @@
 # AltQ v0.0.1-alpha
 
-## WARN
+## DISCLAIMER
 
 This is the early alpha version build to demonstrate the proof of concept of AI integration in the development process.
 
 The main goal of the project is to create an assistant who will do all the routine work knowing the context of the project.
 
-<div style="display: flex; align-items: center">
-    <div style="margin-right: 10px">
-        <img width="90" src="./icon.png">
-    </div>
-    <div style="flex: 1">
-        I am AltQ, the AI Programming Assistant. I help developers write code quickly and efficiently.
-    </div>
-</div>
+## How to
+
+`alt+q` : Displays the request prompt.
+
+`shift+alt+q`: Displays the request prompt and uses the text-davinci-3 model instead of codex-davinci-2.
+
+Invoke the prompt anywhere and input your request to have the answer pasted at that location.
+
+Select any text and invoke the prompt to make the necessary modifications.
+
+## About
+
+I am AltQ, the AI Programming Assistant.<br />
+I help developers write code quickly and efficiently.
 
 ## Features
 
-My main features are helping you write code quickly and efficiently, providing code suggestions, and helping you debug your code.
-
-`alt+q` : Displays the request prompt..
-
-`shift+alt+q`: Displays the request prompt and uses the text-davinci-3 model instead of codex-davinci-2..
-
+1. Develop new features
+1. Optimize and enhance existing code
+1. Acquire knowledge of the current project and provide contextually relevant suggestions.
 
 ## Requirements
 
@@ -40,11 +43,13 @@ This extension contributes the following settings:
 
 This is an early alpha version build to demonstrate the proof of concept of AI integration in the development process.
 
+Don't change the cursor position while generation.
+
 Some prompts may produce unexpected results.  
 Some errors may appear unexpectedly.
 
 For any questions, ideas and suggestions,  
-I'm waiting for you on Reddit
+Please feel free to get in touch.
 
 ## Release Notes
 ### 0.0.1-alpha
