@@ -91,7 +91,7 @@ export function getCurrentLineOffset() {
     let editor = vscode.window.activeTextEditor;
     let position = editor!.selection.active;
     let currentLine = editor!.document.lineAt(position).text;
-    return currentLine.match(/^\s*/)[0];
+    return currentLine.match(/^\s*/)?.[0] || '';
 }
 
 export function moveCursorToStartOfNextLine() {

@@ -49,6 +49,6 @@ export default function detectLanguage(fileName: string): string {
             return "Racket";
         case "ml":
             return "OCaml";
-        default: return 'Unknown';
+        default: return fileExtension || 'Unknown';
     }
 }
