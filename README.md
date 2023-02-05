@@ -10,7 +10,7 @@ The main goal of the project is to create an assistant who will do all the routi
 
 `alt+q` : Displays the request prompt.
 
-`shift+alt+q`: Displays the request prompt and uses the text-davinci-3 model instead of codex-davinci-2.
+`shift+alt+q`: Displays the request prompt and uses the text-davinci-3 model instead of codex-davinci-2 (better results, higher price of OpenAI credits).
 
 Invoke the prompt anywhere and input your request to have the answer pasted at that location.
 

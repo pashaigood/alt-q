@@ -1,17 +1,27 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { writeCode, getPlaygroundModel } from './api';
+import { writeCode, getPlaygroundModel, askQuestion } from './api';
+import StringBuffer from './classes/StringBuffer';
 import Deferred from './Deferred';
+import { removeCommentStart } from './utils/code';
 import { getConfig, updateConfig } from './utils/config';
-import { getAbsolutePosition, getCurrentCommentBlock, getCurrentLineOffset, getNextLine, getTextAround, insertCharacter, moveCursorToEndOfLine, moveCursorToNextLine, moveCursorToStartOfNextLine, moveCursorToTheEndOfLine, putText, showPrompt } from './utils/editor';
-import { delay } from './utils/time';
-import typeText, { typeText2 } from './utils/typing';
+import detectLanguage from './utils/detectLanguage';
+import { getAbsolutePosition, getCurrentCommentBlock, getCurrentLineOffset, getCurrentLineText, getNextLine, getTextAround, insertCharacter, moveCursorToEndOfLine, moveCursorToNextLine, moveCursorToStartOfNextLine, moveCursorToTheEndOfLine, moveToNextLineIfCurrentNotEmpty, putText, showPrompt } from './utils/editor';
+import { isQuestion } from './utils/NLU';
+
+let MODE: 'test' | 'dev' | 'production' = 'production';
 
 export function activate(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('alt-q.altQ', async () => {
 		await actionAltQ();
 	});
+
+	if (context.extensionMode === vscode.ExtensionMode.Development) {
+		MODE = 'dev';
+	} else if (context.extensionMode === vscode.ExtensionMode.Test) {
+		MODE = 'test';
+	}
 
 	context.subscriptions.push(disposable);
 
@@ -49,14 +59,16 @@ const runAltQ = async (force: boolean = false) => {
 	let selection = editor.selection;
 
 	let selectedText = editor.document.getText(selection);
+
 	let fileName = editor.document.fileName;
+	console.log(vscode.workspace.workspaceFolders, editor.document);
 
 	// console.log(editor.document.getText());
 
 	const promptTitle = force ? 'Enter Force Prompt' : 'Enter Prompt'
 	const model = force ? 'text-davinci-003' : 'code-davinci-002';
-	// const model = 'code-davinci-002'
 	let prompt = selectedText.trim();
+	let initialPrompt = prompt;
 
 	let comment = getCurrentCommentBlock();
 	let cursor = {
@@ -68,7 +80,8 @@ const runAltQ = async (force: boolean = false) => {
 		prompt = prompt;
 		cursor = undefined!;
 	} else if (comment && !selectedText) {
-		prompt = comment.trim();
+		prompt = removeCommentStart(comment.trim(), detectLanguage(fileName));
+		initialPrompt = prompt;
 		cursor = undefined!;
 	} else if (!comment && selectedText) {
 		const input = await showPrompt({
@@ -76,7 +89,8 @@ const runAltQ = async (force: boolean = false) => {
 		}) || '';
 
 		if (input) {
-			prompt = prompt + "\n'''\nCommand: " + input;
+			initialPrompt = input;
+			prompt = prompt + "\n" + input;
 		} else {
 			prompt = '';
 		}
@@ -84,34 +98,109 @@ const runAltQ = async (force: boolean = false) => {
 		prompt = await showPrompt({
 			title: promptTitle
 		});
+		initialPrompt = prompt;
 	}
+
 
 	if (prompt.length === 0) {
 		return;
 	}
 
-	freez(editor);
+	// 	let text = `You are AltQ, the AI Programming Assistant. You are working on a code project in an IDE.
+	// Your task is to write highly performant and clear code in the designated programming
+	// language (e.g Python, Java, C++) that is easy for a person with little or no programming experience,
+	// such as a 5-year-old child, to understand. The code should be well-organized and follow proper
+	// indentation and naming conventions. Additionally, include minimal comments that are concise and
+	// useful, and keep comments within 80-90 characters for better readability.
+	// <html>
+	// <body>
+	// 	<h1>here</h1>
+	// </body>
+	// </html>
+	// The current file you are working on is a .
+	// Make sure the code you write is relevant and specific to this file's purpose and function within the overall project.`
+
+	// 	const stringStream = new StringBuffer((data) => {
+	// 		console.log(data);
+
+	// 		let editor = vscode.window.activeTextEditor;
+	// 		editor!.edit(async builder => {
+	// 			let position = editor!.selection.active;
+	// 			builder.insert(position, data);
+	// 		}, { undoStopBefore: false, undoStopAfter: false })
+	// 	}, 60);
+
+	// 	let index = 0;
+	// 	const intervalId = setInterval(() => {
+	// 		stringStream.addData(text.substring(index, index + 2));
+	// 		index += 2;
+	// 		if (index >= text.length) {
+	// 			clearInterval(intervalId)
+	// 			stringStream.close();
+	// 		}
+	// 	 }, 20);
+
+	// 	return;
+
+	prompt = prompt.replace(/\r/g, '');
+
+	freez();
 	try {
-		const res = await writeCode(prompt, model, {
-			file: fileName,
-			fileContent: editor.document.getText(),
-			cursor
-		});
+		const action = isQuestion(prompt) ? askQuestion : writeCode;
 
-		if (!selection.isEmpty) {
-			putText(res.trim(), selection);
+		if (selection.isEmpty) {
+			moveToNextLineIfCurrentNotEmpty();
+
+			const stringStream = new StringBuffer((data: string) => {
+				let editor = vscode.window.activeTextEditor;
+				let position = editor!.selection.active;
+				editor!.edit(builder => {
+					builder.insert(position, data);
+				}, { undoStopBefore: false, undoStopAfter: false });
+			}, 60);
+
+			try {
+				await action(prompt, model, {
+					file: fileName,
+					fileContent: editor.document.getText(),
+					cursor
+				}, (data) => {
+					stringStream.addData(data);
+				});
+			} catch (e) {
+				console.log(e);
+				throw e;
+			} finally {
+				stringStream.close();
+			}
 		} else {
-			moveCursorToTheEndOfLine();
-			let whitespace = getCurrentLineOffset();
-			insertCharacter("\n" + whitespace)
-			await delay(30);
-
-			await typeText2(res.trim() + "\n").defer;
+			const result = await action(prompt, model, {
+				file: fileName,
+				fileContent: editor.document.getText(),
+				cursor
+			});
+			putText(result.trim(), selection);
 		}
+
+		// const res = await writeCode(prompt, model, {
+		// 	file: fileName,
+		// 	fileContent: editor.document.getText(),
+		// 	cursor
+		// });
+		// if (!selection.isEmpty) {
+		// 	putText(res.trim(), selection);
+		// } else {
+		// 	moveCursorToTheEndOfLine();
+		// 	let whitespace = getCurrentLineOffset();
+		// 	insertCharacter("\n" + whitespace)
+		// 	await delay(30);
+
+		// 	await typeText2(res.trim() + "\n").defer;
+		// }
 	} catch (e) {
 		vscode.window.showErrorMessage((e as Error).message);
 	}
-	unfreez(editor);
+	unfreez();
 }
 
 function openQuickInput() {
@@ -173,13 +262,7 @@ let loadingIndicator: vscode.StatusBarItem;
 let processDefer: Deferred<undefined>;
 let animation: DotElapsingAnimation;
 
-function freez(editor: vscode.TextEditor) {
-	// Disable user input
-	// editor.options = {
-	// 	// readOnly: true,
-	// 	cursorStyle: vscode.TextEditorCursorStyle.Block
-	// };
-
+function freez() {
 	// Show a loading indicator
 	loadingIndicator = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
 	loadingIndicator.text = 'Code generation...';
@@ -200,13 +283,7 @@ function freez(editor: vscode.TextEditor) {
 	});
 }
 
-function unfreez(editor: vscode.TextEditor) {
-	// Enable user input
-	// editor.options = {
-	// 	// readOnly: false,
-	// 	cursorStyle: vscode.TextEditorCursorStyle.Line
-	// };
-
+function unfreez() {
 	// Hide the loading indicator
 	loadingIndicator?.hide();
 	animation.stop();

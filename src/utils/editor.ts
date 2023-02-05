@@ -94,6 +94,15 @@ export function getCurrentLineOffset() {
     return currentLine.match(/^\s*/)?.[0] || '';
 }
 
+export function moveToNextLineIfCurrentNotEmpty() {
+    const lineText = getCurrentLineText();
+    if (lineText.trim().length !== 0) {
+        moveCursorToTheEndOfLine();
+        let whitespace = getCurrentLineOffset();
+        insertCharacter("\n" + whitespace)
+    }
+}
+
 export function moveCursorToStartOfNextLine() {
     let editor = vscode.window.activeTextEditor;
     if (!editor) {
@@ -129,7 +138,7 @@ export function getCurrentLine() {
 }
 
 export function getCurrentLineText() {
-    return getCurrentLine()?.text;
+    return getCurrentLine()?.text || '';
 }
 
 export function isCursorInComment(language: string = 'JavaScript') {

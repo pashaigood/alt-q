@@ -11,7 +11,11 @@
     "vscode": "^1.74.0"
   },
   "categories": [
-    "Other"
+    "Programming Languages",
+    "Snippets",
+    "Machine Learning",
+    "Education",
+    "Data Science"
   ],
   "activationEvents": [
     "onCommand:alt-q.altQ",
@@ -37,6 +41,15 @@
         }
       }
     },
+    "views": {
+			"explorer": [
+				{
+					"type": "webview",
+					"id": "alt-q.colorsView",
+					"name": "Calico Colors"
+				}
+			]
+		},
     "commands": [
       {
         "command": "alt-q.altQ",
