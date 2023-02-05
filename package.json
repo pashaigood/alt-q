@@ -45,8 +45,8 @@
 			"explorer": [
 				{
 					"type": "webview",
-					"id": "alt-q.colorsView",
-					"name": "Calico Colors"
+					"id": "alt-q.history",
+					"name": "AltQ: Last request"
 				}
 			]
 		},

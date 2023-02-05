@@ -5,6 +5,7 @@ import { ApiContext } from "./types";
 import { getConfig } from "./utils/config";
 import { convertFromHtmlCode } from "./utils/html";
 import { memoize } from "./utils/memo";
+import { AxiosRequestConfig } from "axios";
 
 export const SEPARATOR = "'''"//'⟱';
 export const COMMAND = "Command: ";
@@ -73,7 +74,7 @@ ${SEPARATOR}
 }
 
 export function getCommand(language: string, input: string) {
-  return `${COMMAND}${input.replace(/\.$/, '')} using ${language}.`;
+  return `${COMMAND}${input.replace(/\.$/, '')} using ${language}. Be brief and understandable`;
 }
 
 function getPreposition(context: ApiContext) {
@@ -136,7 +137,7 @@ ${SEPARATOR}`;
   return doRequest(settings, onPortion);
 }
 
-export async function writeCode(command: string, model: string, context: ApiContext, onPortion?: (data: string) => any) {
+export async function writeCode(command: string, model: string, context: ApiContext, onPortion?: (data: string) => any, axioParams?: AxisParams) {
 
   const {
     language,
@@ -189,31 +190,39 @@ ${SEPARATOR}`;
     stop: [SEPARATOR, SEPARATOR + 'Command:'],
   };
 
-  return doRequest(settings, onPortion);
-
+  return doRequest(settings, onPortion, axioParams);
 }
 
-async function doRequest(settings: CreateCompletionRequest, onPortion?: (data: string) => any) {
+type AxisParams = { signal: AxiosRequestConfig<any>['signal'] };
+
+async function doRequest(settings: CreateCompletionRequest, onPortion?: (data: string) => any, axioParams?: AxisParams) {
   if (onPortion) {
-    return await pullResult(settings, onPortion);
+    return await pullResult(settings, onPortion, axioParams);
   }
 
-  const { data, ...rest } = await getResult(settings);
+  const { data, ...rest } = await getResult(settings, axioParams);
 
   let response = data.choices[0].text;
 
   return convertFromHtmlCode(response || '').trim();
 }
 
-function getResult(params: CreateCompletionRequest) {
+function getResult(params: CreateCompletionRequest, axioParams?: AxisParams) {
   const openai = createApi(getConfig().apiKey)!;
 
-  return openai.createCompletion(params);
+  return openai.createCompletion(params, axioParams);
 }
 
-async function pullResult(params: CreateCompletionRequest, onPartition: (part: string) => any) {
+async function pullResult(params: CreateCompletionRequest, onPartition: (part: string) => any, axioParams?: AxisParams) {
   const openai = createApi(getConfig().apiKey)!;
-  const request = await openai.createCompletion({ ...params, stream: true }, { responseType: 'stream' });
+  const controller = new AbortController();
+  const request = await openai.createCompletion({
+    ...params,
+     stream: true
+  }, {
+    responseType: 'stream',
+    ...axioParams
+  });
   const defer = new Deferred();
 
   request.data.on("data", (rest: Buffer) => {

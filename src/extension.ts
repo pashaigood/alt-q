@@ -2,6 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { writeCode, getPlaygroundModel, askQuestion } from './api';
+import ColorsViewProvider from './classes/SideBar';
 import StringBuffer from './classes/StringBuffer';
 import Deferred from './Deferred';
 import { removeCommentStart } from './utils/code';
@@ -12,9 +13,11 @@ import { isQuestion } from './utils/NLU';
 
 let MODE: 'test' | 'dev' | 'production' = 'production';
 
+let sideBar: ColorsViewProvider;
+
 export function activate(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('alt-q.altQ', async () => {
-		await actionAltQ();
+		await actionAltQ(context);
 	});
 
 	if (context.extensionMode === vscode.ExtensionMode.Development) {
@@ -26,11 +29,17 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(disposable);
 
 	disposable = vscode.commands.registerCommand('alt-q.altQDeep', async () => {
-		await actionAltQ(true);
+		await actionAltQ(context, true);
 	});
+
+	sideBar = new ColorsViewProvider(context.extensionUri);
+
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(ColorsViewProvider.viewType, sideBar));
 }
 
-async function actionAltQ(force: boolean = false) {
+
+async function actionAltQ(context: vscode.ExtensionContext, force: boolean = false) {
 	if (getConfig().apiKey) {
 		await runAltQ(getConfig().useTheForce || force);
 	} else {
@@ -39,12 +48,12 @@ async function actionAltQ(force: boolean = false) {
 		});
 		await updateConfig('apiKey', key);
 		if (key?.length) {
-			await actionAltQ(force);
+			await actionAltQ(context, force);
 		}
 	}
 }
 
-const runAltQ = async (force: boolean = false) => {
+const runAltQ = async (context: vscode.ExtensionContext, force: boolean = false) => {
 	// The code you place here will be executed every time your command is executed
 	// Display a message box to the user
 	// vscode.window.showInformationMessage('Hello World from hello-next!');
@@ -54,6 +63,8 @@ const runAltQ = async (force: boolean = false) => {
 	if (!editor) {
 		return;
 	}
+
+	// showPanel(context);
 
 	// Get the current selection
 	let selection = editor.selection;
@@ -142,9 +153,16 @@ const runAltQ = async (force: boolean = false) => {
 
 	// 	return;
 
+	sideBar.updateHistory(prompt);
+
 	prompt = prompt.replace(/\r/g, '');
 
-	freez();
+	const controller = new AbortController();
+	freez({
+		onCancel() {
+			controller.abort();
+		}
+	});
 	try {
 		const action = isQuestion(prompt) ? askQuestion : writeCode;
 
@@ -166,20 +184,26 @@ const runAltQ = async (force: boolean = false) => {
 					cursor
 				}, (data) => {
 					stringStream.addData(data);
+				}, {
+					signal: controller.signal
 				});
 			} catch (e) {
-				console.log(e);
+				console.error(e);
 				throw e;
 			} finally {
+				sideBar.updateHistory(prompt, stringStream.getData());
 				stringStream.close();
 			}
 		} else {
-			const result = await action(prompt, model, {
+			const result = (await action(prompt, model, {
 				file: fileName,
 				fileContent: editor.document.getText(),
 				cursor
-			});
-			putText(result.trim(), selection);
+			}, undefined, {
+				signal: controller.signal
+			})).trim();
+			sideBar.updateHistory(prompt, result);
+			putText(result, selection);
 		}
 
 		// const res = await writeCode(prompt, model, {
@@ -203,26 +227,46 @@ const runAltQ = async (force: boolean = false) => {
 	unfreez();
 }
 
-function openQuickInput() {
-	vscode.window.showInputBox({
-		prompt: "Enter your desired input:"
-	}).then(async input => {
-		if (input) {
-			const result = await getPlaygroundModel(input);
-
-			const text = result;
-
-			let editor = vscode.window.activeTextEditor;
-			if (editor) {
-				let selection = editor.selection;
-				editor.edit(builder => {
-					builder.replace(selection, text);
-				});
-			}
+const showPanel = (context: vscode.ExtensionContext) => {
+	let panel = vscode.window.createWebviewPanel(
+		'sidePanel',
+		'My Side Panel',
+		vscode.ViewColumn.Beside,
+		{
+			enableScripts: true
 		}
-	});
-}
+	);
 
+	panel.webview.html = `<!DOCTYPE html>
+	<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource:; script-src vscode-resource:;">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>My Side Panel</title>
+		<script defered type="text/javascript">
+		let value = 1;
+		document.getElementById('point').innerHTML = 1;
+
+		setInterval(() => {
+			document.getElementById('point').innerHTML = value;
+			value ++;
+		}, 1000);
+		</script>
+	</head>
+	<body>
+		<h1>Hello from the side panel!</h1>
+		<div id="point">0</div>
+		let value = 1;
+		document.getElementById('point').innerHTML = 1;
+
+		setInterval(() => {
+			document.getElementById('point').innerHTML = value;
+			value ++;
+		}, 1000);
+	</body>
+	</html>`;
+}
 
 // This method is called when your extension is deactivated
 export function deactivate() { }
@@ -262,7 +306,9 @@ let loadingIndicator: vscode.StatusBarItem;
 let processDefer: Deferred<undefined>;
 let animation: DotElapsingAnimation;
 
-function freez() {
+function freez({
+	onCancel
+}: { onCancel?: () => any }) {
 	// Show a loading indicator
 	loadingIndicator = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
 	loadingIndicator.text = 'Code generation...';
@@ -271,9 +317,13 @@ function freez() {
 	vscode.window.withProgress({
 		location: vscode.ProgressLocation.Notification,
 		// title: "Code generation...",
-		cancellable: false
+		cancellable: true,
 	}, (progress, token) => {
 		processDefer = new Deferred();
+
+		token.onCancellationRequested(() => {
+			onCancel?.();
+		});
 
 		animation = new DotElapsingAnimation((state) => {
 			progress.report({ message: 'Code generation' + state })

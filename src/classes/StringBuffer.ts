@@ -1,4 +1,5 @@
 export default class StringBuffer {
+  private saveBuffer: string = '';
   private buffer: string[] = [];
   private intervalId: any;
   private callback: (data: string) => any;
@@ -13,6 +14,7 @@ export default class StringBuffer {
 
   public addData(data: string) {
     if (!this.isClosed) {
+      this.saveBuffer += data;
       this.buffer.push(data);
     }
   }
@@ -37,5 +39,9 @@ export default class StringBuffer {
 
   public stop() {
     clearInterval(this.intervalId);
+  }
+
+  public getData() {
+    return this.saveBuffer;
   }
 }
