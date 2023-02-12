@@ -37,13 +37,14 @@ This extension contributes the following settings:
 
 * `AltQ > API Key`: Your OpenAI API Key.
 * `AltQ > Use The Force`: Always use text-davinci-3 instead of codex-davinci-2.
+* `AltQ > Stream Request`: **(Experimental)** Use the OpenAI API stream to receive partial answers instead of waiting for the entire response. The API is unstable and frequently malfunctions but looks cool.
 
 
 ## Known Issues
 
 This is an early alpha version build to demonstrate the proof of concept of AI integration in the development process.
 
-Don't change the cursor position while generation.
+Don't change the cursor position during generation because the answer will be placed there.
 
 Some prompts may produce unexpected results.  
 Some errors may appear unexpectedly.

@@ -17,10 +17,6 @@
     "Education",
     "Data Science"
   ],
-  "activationEvents": [
-    "onCommand:alt-q.altQ",
-    "onCommand:alt-q.altQDeep"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "configuration": {
@@ -38,6 +34,12 @@
           "title": "Always use the force",
           "default": false,
           "description": "Always use text-davinci-3 instead of codex-davinci-2 (costs more openai credits)"
+        },
+        "alt-q.streamRequest": {
+          "type": "boolean",
+          "title": "Use stream OpenAI API",
+          "default": true,
+          "description": "(Experimental) Use the OpenAI API stream to receive partial answers instead of waiting for the entire response. The API is unstable and frequently malfunctions but looks cool."
         }
       }
     },

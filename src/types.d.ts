@@ -9,3 +9,9 @@ export interface ApiContext {
     fileContent: string,
     cursor?: { start: number, end: number }
 }
+
+export type ExtansionConfiguration = {
+    apiKey: string;
+    streamRequest: boolean;
+    useTheForce: boolean;
+}

@@ -41,7 +41,7 @@ export default class ColorsViewProvider implements vscode.WebviewViewProvider {
 
     public updateHistory(text: string, result?: string) {
         if (this._view) {
-            this._view.show?.(true); // `show` is not implemented in 1.49 but is for 1.50 insiders
+            // this._view.show?.(true); // `show` is not implemented in 1.49 but is for 1.50 insiders
             this._view.webview.postMessage({ type: 'updateHistory', data: [{ id: 1, text, result }] });
         }
     }
