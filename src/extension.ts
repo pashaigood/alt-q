@@ -127,7 +127,7 @@ const runAltQ = async (context: vscode.ExtensionContext, force: boolean = false)
 	});
 	try {
 		const action = isQuestion(prompt) ? askQuestion : writeCode;
-		const axioParams = {
+		const axiosParams = {
 			signal: controller.signal
 		};
 
@@ -150,7 +150,7 @@ const runAltQ = async (context: vscode.ExtensionContext, force: boolean = false)
 				try {
 					await action(prompt, model, contenxt, (data) => {
 						stringStream.addData(data);
-					}, axioParams);
+					}, axiosParams);
 				} catch (e) {
 					console.error(e);
 					throw e;
@@ -159,7 +159,7 @@ const runAltQ = async (context: vscode.ExtensionContext, force: boolean = false)
 					stringStream.close();
 				}
 			} else {
-				const result = await action(prompt, model, contenxt, undefined, axioParams);
+				const result = await action(prompt, model, contenxt, undefined, axiosParams);
 				moveToNextLineIfCurrentNotEmpty();
 				sideBar.updateHistory(prompt, result);
 				putText(result, selection);

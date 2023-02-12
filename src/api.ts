@@ -225,6 +225,7 @@ async function pullResult(params: CreateCompletionRequest, onPartition: (part: s
   });
   const defer = new Deferred();
 
+  // @ts-ignore
   request.data.on("data", (rest: Buffer) => {
     const result = rest.toString().replace('data: ', '').trim();
     // console.log(result);
@@ -241,11 +242,13 @@ async function pullResult(params: CreateCompletionRequest, onPartition: (part: s
     }
   });
 
+  // @ts-ignore
   request.data.on('end', () => {
     defer.resolve(undefined);
     console.log('There will be no more data.');
   });
 
+  // @ts-ignore
   request.data.on('error', (e: any) => {
     defer.reject(e);
     console.log('Data with error.', e);
@@ -289,6 +292,7 @@ export async function getPlaygroundModel(request: string) {
       stream: true
     }, { responseType: 'stream' })
 
+    // @ts-ignore
     resounse.data.on("data", (...rest: any[]) => {
       console.log(rest.toString());
     });
