@@ -18,6 +18,10 @@
     "Data Science"
   ],
   "main": "./out/extension.js",
+  "activationEvents": [
+    "onCommand:alt-q.altQ",
+    "onCommand:alt-q.altQDeep"
+  ],
   "contributes": {
     "configuration": {
       "title": "AltQ",
