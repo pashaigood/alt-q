@@ -1,4 +1,4 @@
-# AltQ v0.0.1-alpha
+# AltQ v0.0.2
 
 ## DISCLAIMER
 
@@ -55,3 +55,6 @@ Please feel free to get in touch.
 ## Release Notes
 ### 0.0.1-alpha
 Base PoC
+
+### 0.0.2
+Improved the Last Request panel to display HTML.
