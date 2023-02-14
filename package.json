@@ -6,7 +6,7 @@
   "bugs": "https://github.com/pashaigood/alt-q/issues",
   "displayName": "AltQ GPT Power",
   "description": "GPT base helper for coding.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -48,14 +48,14 @@
       }
     },
     "views": {
-			"explorer": [
-				{
-					"type": "webview",
-					"id": "alt-q.history",
-					"name": "AltQ: Last request"
-				}
-			]
-		},
+      "explorer": [
+        {
+          "type": "webview",
+          "id": "alt-q.history",
+          "name": "AltQ: Last request"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "alt-q.altQ",
