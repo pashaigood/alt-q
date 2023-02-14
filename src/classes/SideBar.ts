@@ -1,10 +1,15 @@
 import * as vscode from 'vscode';
+import { convertFromHtmlCode, convertToHtmlCode } from '../utils/html';
+
+type HistoryItem = { id: number, text: string, result?: string };
 
 export default class ColorsViewProvider implements vscode.WebviewViewProvider {
 
     public static readonly viewType = 'alt-q.history';
 
     private _view?: vscode.WebviewView;
+
+    private history: HistoryItem[] = [];
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -30,9 +35,11 @@ export default class ColorsViewProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.onDidReceiveMessage(data => {
             switch (data.type) {
-                case 'colorSelected':
+                case 'getHistory':
                     {
-                        vscode.window.activeTextEditor?.insertSnippet(new vscode.SnippetString(`#${data.value}`));
+                        console.log('get data');
+                        
+                        this._view?.webview.postMessage({ type: 'updateHistory', data: [this.history[0]] });
                         break;
                     }
             }
@@ -41,14 +48,9 @@ export default class ColorsViewProvider implements vscode.WebviewViewProvider {
 
     public updateHistory(text: string, result?: string) {
         if (this._view) {
+            this.history.unshift({ id: 1, text: convertToHtmlCode(text), result: result && convertToHtmlCode(result) });
             // this._view.show?.(true); // `show` is not implemented in 1.49 but is for 1.50 insiders
-            this._view.webview.postMessage({ type: 'updateHistory', data: [{ id: 1, text, result }] });
-        }
-    }
-
-    public clearColors() {
-        if (this._view) {
-            this._view.webview.postMessage({ type: 'clearColors' });
+            this._view.webview.postMessage({ type: 'updateHistory', data: [this.history[0]] });
         }
     }
 
@@ -81,8 +83,7 @@ export default class ColorsViewProvider implements vscode.WebviewViewProvider {
 				<title>Cat Colors</title>
 			</head>
 			<body>
-				<div id="history" class="color-list">
-				</div>
+				<div id="history" class="color-list"></div>
 				<script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
 			</html>`;

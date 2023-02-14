@@ -21,8 +21,14 @@ window.addEventListener('message', event => {
     }
 });
 
-function updateHistory() {
+// function onColorClicked(color) {
+//     vscode.postMessage({ type: 'getHistory', value: color });
+// }
 
+vscode.postMessage({ type: 'getHistory' });
+
+
+function updateHistory() {
     const html = items.map(i => `
     <div id=${i.id}>
         <h3>Request:</h3>
