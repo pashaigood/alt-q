@@ -1,4 +1,4 @@
-# AltQ v0.0.2
+# AltQ v0.0.3
 
 ## DISCLAIMER
 
@@ -58,3 +58,6 @@ Base PoC
 
 ### 0.0.2
 Improved the Last Request panel to display HTML.
+
+### 0.0.3
+Disabled auto tag closing on HTML.
