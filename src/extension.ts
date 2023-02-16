@@ -6,7 +6,7 @@ import ColorsViewProvider from './classes/SideBar';
 import StringBuffer from './classes/StringBuffer';
 import Deferred from './Deferred';
 import { removeCommentStart } from './utils/code';
-import { getConfig, updateConfig } from './utils/config';
+import { disableAutoClosingTags, getAutoClosingTags, getConfig, restoreAutoClosingTags, updateConfig } from './utils/config';
 import detectLanguage from './utils/detectLanguage';
 import { getAbsolutePosition, getCurrentCommentBlock, getCurrentLineOffset, getCurrentLineText, getNextLine, getTextAround, insertCharacter, moveCursorToEndOfLine, moveCursorToNextLine, moveCursorToStartOfNextLine, moveCursorToTheEndOfLine, moveToNextLineIfCurrentNotEmpty, putText, showPrompt } from './utils/editor';
 import { isQuestion } from './utils/NLU';
@@ -71,7 +71,7 @@ const runAltQ = async (context: vscode.ExtensionContext, force: boolean = false)
 	let selectedText = editor.document.getText(selection);
 
 	let fileName = editor.document.fileName;
-	console.log(vscode.workspace.workspaceFolders, editor.document);
+	// console.log(vscode.workspace.workspaceFolders, editor.document);
 
 	// console.log(editor.document.getText());
 
@@ -119,6 +119,23 @@ const runAltQ = async (context: vscode.ExtensionContext, force: boolean = false)
 
 	prompt = prompt.replace(/\r/g, '');
 
+	// try {
+
+	// 	const autoClosingTagSettings = await disableAutoClosingTags();
+
+	// 	editor!.edit(builder => {
+	// 		let editor = vscode.window.activeTextEditor;
+	// 		let position = editor!.selection.active;
+	// 		builder.replace(position, '<div>');
+	// 	}, { undoStopBefore: false, undoStopAfter: false });
+
+	// 	console.log(autoClosingTagSettings);
+
+	// 	await restoreAutoClosingTags(autoClosingTagSettings);
+	// } catch (e) {
+	// 	console.log(e);
+	// }
+
 	const controller = new AbortController();
 	freez({
 		onCancel() {
@@ -138,6 +155,7 @@ const runAltQ = async (context: vscode.ExtensionContext, force: boolean = false)
 				cursor
 			};
 			if (getConfig().streamRequest) {
+				const autoClosingTagSettings = await disableAutoClosingTags();
 				moveToNextLineIfCurrentNotEmpty();
 				const stringStream = new StringBuffer((data: string) => {
 					let editor = vscode.window.activeTextEditor;
@@ -157,6 +175,7 @@ const runAltQ = async (context: vscode.ExtensionContext, force: boolean = false)
 				} finally {
 					sideBar.updateHistory(prompt, stringStream.getData());
 					stringStream.close();
+					await restoreAutoClosingTags(autoClosingTagSettings);
 				}
 			} else {
 				const result = await action(prompt, model, contenxt, undefined, axiosParams);
