@@ -63,3 +63,6 @@ Improved the Last Request panel to display HTML.
 
 ### 0.0.3
 Disabled auto tag closing on HTML.
+
+### 0.0.4
+Updated README with a gif preview.

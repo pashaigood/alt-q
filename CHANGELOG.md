@@ -7,3 +7,15 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## [Unreleased]
 
 - Base PoC
+
+### 0.0.1-alpha
+Base PoC
+
+### 0.0.2
+Improved the Last Request panel to display HTML.
+
+### 0.0.3
+Disabled auto tag closing on HTML.
+
+### 0.0.4
+Updated README with a gif preview.
