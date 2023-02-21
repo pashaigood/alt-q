@@ -163,7 +163,7 @@ const runAltQ = async (context: vscode.ExtensionContext, force: boolean = false)
 					editor!.edit(builder => {
 						builder.insert(position, data);
 					}, { undoStopBefore: false, undoStopAfter: false });
-				}, 60);
+				}, 30);
 
 				try {
 					await action(prompt, model, contenxt, (data) => {

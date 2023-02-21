@@ -1,5 +1,7 @@
 # AltQ v0.0.3
 
+![](images/preview.gif)
+
 ## DISCLAIMER
 
 This is the early alpha version build to demonstrate the proof of concept of AI integration in the development process.

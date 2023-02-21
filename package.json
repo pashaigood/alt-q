@@ -1,7 +1,7 @@
 {
   "name": "alt-q",
   "publisher": "pashaigood",
-  "icon": "icon.png",
+  "icon": "images/icon.png",
   "repository": "https://github.com/pashaigood/alt-q",
   "bugs": "https://github.com/pashaigood/alt-q/issues",
   "displayName": "AltQ GPT Power",
