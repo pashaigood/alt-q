@@ -19,3 +19,6 @@ Disabled auto tag closing on HTML.
 
 ### 0.0.4
 Updated README with a gif preview.
+
+### 0.0.5
+Remove codex model support.

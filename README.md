@@ -1,4 +1,4 @@
-# AltQ v0.0.3
+# AltQ v0.0.5
 
 ![](images/preview.gif)
 
@@ -11,8 +11,6 @@ The main goal of the project is to create an assistant who will do all the routi
 ## How to
 
 `alt+q` : Displays the request prompt.
-
-`shift+alt+q`: Displays the request prompt and uses the text-davinci-3 model instead of codex-davinci-2 (better results, higher price of OpenAI credits).
 
 Invoke the prompt anywhere and input your request to have the answer pasted at that location.
 
@@ -38,7 +36,6 @@ You must obtain and provide an [OpenAI API key](https://beta.openai.com/account/
 This extension contributes the following settings:
 
 * `AltQ > API Key`: Your OpenAI API Key.
-* `AltQ > Use The Force`: Always use text-davinci-3 instead of codex-davinci-2.
 * `AltQ > Stream Request`: **(Experimental)** Use the OpenAI API stream to receive partial answers instead of waiting for the entire response. The API is unstable and frequently malfunctions but looks cool.
 
 
@@ -66,3 +63,6 @@ Disabled auto tag closing on HTML.
 
 ### 0.0.4
 Updated README with a gif preview.
+
+### 0.0.5
+Remove codex model support.

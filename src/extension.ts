@@ -29,7 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(disposable);
 
 	disposable = vscode.commands.registerCommand('alt-q.altQDeep', async () => {
-		await actionAltQ(context, true);
+		await actionAltQ(context);
 	});
 
 	sideBar = new ColorsViewProvider(context.extensionUri);
@@ -38,21 +38,21 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider(ColorsViewProvider.viewType, sideBar));
 }
 
-async function actionAltQ(context: vscode.ExtensionContext, force: boolean = false) {
+async function actionAltQ(context: vscode.ExtensionContext) {
 	if (getConfig().apiKey) {
-		await runAltQ(context, getConfig().useTheForce || force);
+		await runAltQ(context);
 	} else {
 		const key = await showPrompt({
-			title: "Please, provide you api kay first."
+			title: "Please, provide you api key first."
 		});
 		await updateConfig('apiKey', key);
 		if (key?.length) {
-			await actionAltQ(context, force);
+			await actionAltQ(context);
 		}
 	}
 }
 
-const runAltQ = async (context: vscode.ExtensionContext, force: boolean = false) => {
+const runAltQ = async (context: vscode.ExtensionContext) => {
 	// The code you place here will be executed every time your command is executed
 	// Display a message box to the user
 	// vscode.window.showInformationMessage('Hello World from hello-next!');
@@ -75,8 +75,8 @@ const runAltQ = async (context: vscode.ExtensionContext, force: boolean = false)
 
 	// console.log(editor.document.getText());
 
-	const promptTitle = force ? 'Enter Force Prompt' : 'Enter Prompt'
-	const model = force ? 'text-davinci-003' : 'code-davinci-002';
+	const promptTitle = 'Enter Prompt'
+	const model = 'text-davinci-003';
 	let prompt = selectedText.trim();
 	let initialPrompt = prompt;
 
