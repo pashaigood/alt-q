@@ -2,7 +2,6 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { writeCode, askQuestion } from './api';
-import ColorsViewProvider from './classes/SideBar';
 import StringBuffer from './classes/StringBuffer';
 import Deferred from './Deferred';
 import { removeCommentStart } from './utils/code';
@@ -10,10 +9,13 @@ import { disableAutoClosingTags, getAutoClosingTags, getConfig, restoreAutoClosi
 import detectLanguage from './utils/detectLanguage';
 import { getAbsolutePosition, getCurrentCommentBlock, getCurrentLineOffset, getCurrentLineText, getNextLine, getTextAround, insertCharacter, moveCursorToEndOfLine, moveCursorToNextLine, moveCursorToStartOfNextLine, moveCursorToTheEndOfLine, moveToNextLineIfCurrentNotEmpty, putText, showPrompt } from './utils/editor';
 import { isQuestion } from './utils/NLU';
+import Sidebar from './panels/Sidebar';
+import LastRequest, { ColorsViewProvider } from './panels/LastRequest';
+
 
 let MODE: 'test' | 'dev' | 'production' = 'production';
 
-let sideBar: ColorsViewProvider;
+let lastRequestPanel: ColorsViewProvider;
 
 export function activate(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('alt-q.altQ', async () => {
@@ -32,11 +34,10 @@ export function activate(context: vscode.ExtensionContext) {
 		await actionAltQ(context);
 	});
 
-	sideBar = new ColorsViewProvider(context.extensionUri);
-
-	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(ColorsViewProvider.viewType, sideBar));
+	Sidebar.register(context);
+	lastRequestPanel = LastRequest.register(context);
 }
+
 
 async function actionAltQ(context: vscode.ExtensionContext) {
 	if (getConfig().apiKey) {
@@ -115,7 +116,7 @@ const runAltQ = async (context: vscode.ExtensionContext) => {
 		return;
 	}
 
-	sideBar.updateHistory(prompt);
+	lastRequestPanel.updateHistory(prompt);
 
 	prompt = prompt.replace(/\r/g, '');
 
@@ -173,14 +174,14 @@ const runAltQ = async (context: vscode.ExtensionContext) => {
 					console.error(e);
 					throw e;
 				} finally {
-					sideBar.updateHistory(prompt, stringStream.getData());
+					lastRequestPanel.updateHistory(prompt, stringStream.getData());
 					stringStream.close();
 					await restoreAutoClosingTags(autoClosingTagSettings);
 				}
 			} else {
 				const result = await action(prompt, model, contenxt, undefined, axiosParams);
 				moveToNextLineIfCurrentNotEmpty();
-				sideBar.updateHistory(prompt, result);
+				lastRequestPanel.updateHistory(prompt, result);
 				putText(result, selection);
 			}
 		} else {
@@ -189,7 +190,7 @@ const runAltQ = async (context: vscode.ExtensionContext) => {
 				fileContent: editor.document.getText(),
 				cursor
 			}, undefined, axiosParams)).trim();
-			sideBar.updateHistory(prompt, result);
+			lastRequestPanel.updateHistory(prompt, result);
 			putText(result, selection);
 		}
 

@@ -47,7 +47,23 @@
         }
       }
     },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "myCustomSidebar",
+          "title": "AltQ",
+          "icon": "images/logo.svg"
+        }
+      ]
+    },
     "views": {
+      "myCustomSidebar": [
+        {
+          "type": "webview",
+          "id": "myCustomView",
+          "name": ""
+        }
+      ],
       "explorer": [
         {
           "type": "webview",
