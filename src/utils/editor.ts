@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import detectLanguage, { simplifyLanguage } from './detectLanguage';
 
 export function isSelection() {
     let editor = vscode.window.activeTextEditor;
@@ -314,4 +315,21 @@ export function getAbsolutePosition(cursorPos: vscode.Position) {
     return document.offsetAt(cursorPos)
 }
 
+
+export function getCurrentDocument() {
+    const activeEditor = vscode.window.activeTextEditor;
+
+    if (!activeEditor) {
+        throw new Error('No document found');
+    }
+    return activeEditor.document;
+}
+
+export function detectDocumentLanguage(simplify = false) {
+    const doc = getCurrentDocument();
+
+    const lang = detectLanguage(doc.fileName);
+
+    return simplify ? simplifyLanguage(lang) : lang;
+}
 

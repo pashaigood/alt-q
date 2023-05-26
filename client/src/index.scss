@@ -1,0 +1,62 @@
+html,
+body {
+  height: 100%;
+  padding: 0;
+  // --color-background-default: rgba(255, 255, 255, 0);
+}
+
+:root {
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  transition: none !important;
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+body.dark-theme {
+  color-scheme: light;
+  transition: none !important;
+}
+
+#app {
+  height: 100%;
+  overflow: auto;
+}
+
+*::-webkit-scrollbar {
+  // width: 20px;
+  overflow: visible;
+  position: fixed;
+  left: 0;
+  // display: none;
+}
+
+*:hover::-webkit-scrollbar {
+  // display: initial;
+}
+
+
+*::-webkit-scrollbar-thumb {
+  --scrollbar-thumb-bg: rgba(0, 0, 0, 0);
+  background-color: var(--scrollbar-thumb-bg);
+  transition: background-color var(--scrollbar-transition-duration);
+}
+
+*:hover::-webkit-scrollbar-thumb {
+  background-color: var(--vscode-scrollbarSlider-background);
+}
+
+* {
+  -webkit-overflow-scrolling: touch;
+}

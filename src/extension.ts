@@ -5,17 +5,29 @@ import { writeCode, askQuestion } from './api';
 import StringBuffer from './classes/StringBuffer';
 import Deferred from './Deferred';
 import { removeCommentStart } from './utils/code';
-import { disableAutoClosingTags, getAutoClosingTags, getConfig, restoreAutoClosingTags, updateConfig } from './utils/config';
+import { disableAutoClosingTags, getConfig, restoreAutoClosingTags, updateConfig } from './utils/config';
 import detectLanguage from './utils/detectLanguage';
-import { getAbsolutePosition, getCurrentCommentBlock, getCurrentLineOffset, getCurrentLineText, getNextLine, getTextAround, insertCharacter, moveCursorToEndOfLine, moveCursorToNextLine, moveCursorToStartOfNextLine, moveCursorToTheEndOfLine, moveToNextLineIfCurrentNotEmpty, putText, showPrompt } from './utils/editor';
+import { detectDocumentLanguage, getAbsolutePosition, getCurrentCommentBlock, moveToNextLineIfCurrentNotEmpty, putText, showPrompt } from './utils/editor';
 import { isQuestion } from './utils/NLU';
 import Sidebar from './panels/Sidebar';
-import LastRequest, { ColorsViewProvider } from './panels/LastRequest';
-
+import RequestContext from './panels/RequestContext';
+import LastRequest, { LastRequest as TLastRequest } from './panels/LastRequest';
+import env from './constants/env';
+import activeFile from './services/activeFile';
+import { extractImportsAndRequires, getCurrentDocumentRelativePath } from './utils/fileDeps';
+import dataEvent from './events/DataEvent';
+import './store';
+import { selectFiles } from './features/fileStore';
+import store from './store';
+import { getAbsolutePathFromFile, resolveFile } from './utils/fileSystem';
+import { ApiContext } from './types';
+import storeStorage from './services/storeStorage';
+import deps from './services/deps';
+import plugin from './services/plugin';
 
 let MODE: 'test' | 'dev' | 'production' = 'production';
 
-let lastRequestPanel: ColorsViewProvider;
+let lastRequestPanel: TLastRequest;
 
 export function activate(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('alt-q.altQ', async () => {
@@ -23,7 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	if (context.extensionMode === vscode.ExtensionMode.Development) {
-		MODE = 'dev';
+		env.DEV = true;
 	} else if (context.extensionMode === vscode.ExtensionMode.Test) {
 		MODE = 'test';
 	}
@@ -36,8 +48,14 @@ export function activate(context: vscode.ExtensionContext) {
 
 	Sidebar.register(context);
 	lastRequestPanel = LastRequest.register(context);
-}
+	RequestContext.register(context);
 
+	storeStorage.activate(context);
+
+	deps.activate(context);
+
+	plugin.activate();
+}
 
 async function actionAltQ(context: vscode.ExtensionContext) {
 	if (getConfig().apiKey) {
@@ -56,7 +74,6 @@ async function actionAltQ(context: vscode.ExtensionContext) {
 const runAltQ = async (context: vscode.ExtensionContext) => {
 	// The code you place here will be executed every time your command is executed
 	// Display a message box to the user
-	// vscode.window.showInformationMessage('Hello World from hello-next!');
 
 	// Get the current text editor
 	let editor = vscode.window.activeTextEditor;
@@ -64,17 +81,12 @@ const runAltQ = async (context: vscode.ExtensionContext) => {
 		return;
 	}
 
-	// showPanel(context);
-
 	// Get the current selection
 	let selection = editor.selection;
 
 	let selectedText = editor.document.getText(selection);
 
 	let fileName = editor.document.fileName;
-	// console.log(vscode.workspace.workspaceFolders, editor.document);
-
-	// console.log(editor.document.getText());
 
 	const promptTitle = 'Enter Prompt'
 	const model = 'text-davinci-003';
@@ -120,23 +132,6 @@ const runAltQ = async (context: vscode.ExtensionContext) => {
 
 	prompt = prompt.replace(/\r/g, '');
 
-	// try {
-
-	// 	const autoClosingTagSettings = await disableAutoClosingTags();
-
-	// 	editor!.edit(builder => {
-	// 		let editor = vscode.window.activeTextEditor;
-	// 		let position = editor!.selection.active;
-	// 		builder.replace(position, '<div>');
-	// 	}, { undoStopBefore: false, undoStopAfter: false });
-
-	// 	console.log(autoClosingTagSettings);
-
-	// 	await restoreAutoClosingTags(autoClosingTagSettings);
-	// } catch (e) {
-	// 	console.log(e);
-	// }
-
 	const controller = new AbortController();
 	freez({
 		onCancel() {
@@ -149,12 +144,34 @@ const runAltQ = async (context: vscode.ExtensionContext) => {
 			signal: controller.signal
 		};
 
+
+		const deps = selectFiles(
+			store.getState().fileStore,
+			getCurrentDocumentRelativePath(editor.document)
+		)
+
+		const resolve = plugin(detectDocumentLanguage(true)).deps.resolve;
+
+		const depends = (
+			deps
+				.filter(d => d.enabled)
+				.map(filePath => getAbsolutePathFromFile(editor!.document, filePath.value))
+				.filter(Boolean) as string[]
+		)
+			.map(resolve)
+			.filter(Boolean) as string[];
+
+		const apiContext: ApiContext = {
+			environment: {
+				depends: Array.from(new Set(depends))
+			},
+			file: fileName,
+			fileContent: editor.document.getText(),
+			cursor
+		};
+
+
 		if (selection.isEmpty) {
-			const contenxt = {
-				file: fileName,
-				fileContent: editor.document.getText(),
-				cursor
-			};
 			if (getConfig().streamRequest) {
 				const autoClosingTagSettings = await disableAutoClosingTags();
 				moveToNextLineIfCurrentNotEmpty();
@@ -167,7 +184,7 @@ const runAltQ = async (context: vscode.ExtensionContext) => {
 				}, 30);
 
 				try {
-					await action(prompt, model, contenxt, (data) => {
+					await action(prompt, model, apiContext, (data) => {
 						stringStream.addData(data);
 					}, axiosParams);
 				} catch (e) {
@@ -179,81 +196,20 @@ const runAltQ = async (context: vscode.ExtensionContext) => {
 					await restoreAutoClosingTags(autoClosingTagSettings);
 				}
 			} else {
-				const result = await action(prompt, model, contenxt, undefined, axiosParams);
+				const result = await action(prompt, model, apiContext, undefined, axiosParams) || '';
 				moveToNextLineIfCurrentNotEmpty();
 				lastRequestPanel.updateHistory(prompt, result);
 				putText(result, selection);
 			}
 		} else {
-			const result = (await action(prompt, model, {
-				file: fileName,
-				fileContent: editor.document.getText(),
-				cursor
-			}, undefined, axiosParams)).trim();
+			const result = (await action(prompt, model, apiContext, undefined, axiosParams) || '').trim();
 			lastRequestPanel.updateHistory(prompt, result);
 			putText(result, selection);
 		}
-
-		// const res = await writeCode(prompt, model, {
-		// 	file: fileName,
-		// 	fileContent: editor.document.getText(),
-		// 	cursor
-		// });
-		// if (!selection.isEmpty) {
-		// 	putText(res.trim(), selection);
-		// } else {
-		// 	moveCursorToTheEndOfLine();
-		// 	let whitespace = getCurrentLineOffset();
-		// 	insertCharacter("\n" + whitespace)
-		// 	await delay(30);
-
-		// 	await typeText2(res.trim() + "\n").defer;
-		// }
 	} catch (e) {
 		vscode.window.showErrorMessage((e as Error).message);
 	}
 	unfreez();
-}
-
-const showPanel = (context: vscode.ExtensionContext) => {
-	let panel = vscode.window.createWebviewPanel(
-		'sidePanel',
-		'My Side Panel',
-		vscode.ViewColumn.Beside,
-		{
-			enableScripts: true
-		}
-	);
-
-	panel.webview.html = `<!DOCTYPE html>
-	<html>
-	<head>
-		<meta charset="UTF-8">
-		<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource:; script-src vscode-resource:;">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>My Side Panel</title>
-		<script defered type="text/javascript">
-		let value = 1;
-		document.getElementById('point').innerHTML = 1;
-
-		setInterval(() => {
-			document.getElementById('point').innerHTML = value;
-			value ++;
-		}, 1000);
-		</script>
-	</head>
-	<body>
-		<h1>Hello from the side panel!</h1>
-		<div id="point">0</div>
-		let value = 1;
-		document.getElementById('point').innerHTML = 1;
-
-		setInterval(() => {
-			document.getElementById('point').innerHTML = value;
-			value ++;
-		}, 1000);
-	</body>
-	</html>`;
 }
 
 // This method is called when your extension is deactivated

@@ -1,11 +1,12 @@
 import { CreateCompletionRequest, OpenAIApi, Configuration } from "openai";
 import Deferred from "./Deferred";
-import detectLanguage from "./utils/detectLanguage";
+import detectLanguage, { Language } from "./utils/detectLanguage";
 import { ApiContext } from "./types";
 import { getConfig } from "./utils/config";
 import { convertFromHtmlCode } from "./utils/html";
 import { memoize } from "./utils/memo";
 import { AxiosRequestConfig } from "axios";
+import { getFileContent, getRelativePath, resolveFile } from "./utils/fileSystem";
 
 export const SEPARATOR = "'''"//'⟱';
 export const COMMAND = "Command: ";
@@ -138,7 +139,6 @@ ${SEPARATOR}`;
 }
 
 export async function writeCode(command: string, model: string, context: ApiContext, onPortion?: (data: string) => any, axioParams?: AxisParams) {
-
   const {
     language,
     suffix,
@@ -195,22 +195,22 @@ ${SEPARATOR}`;
 
 type AxisParams = { signal: AxiosRequestConfig<any>['signal'] };
 
-async function doRequest(settings: CreateCompletionRequest, onPortion?: (data: string) => any, axioParams?: AxisParams) {
+async function doRequest(settings: CreateCompletionRequest, onPortion?: (data: string) => any, axiosParams?: AxisParams) {
   if (onPortion) {
-    return await pullResult(settings, onPortion, axioParams);
+    return await pullResult(settings, onPortion, axiosParams);
   }
 
-  const { data, ...rest } = await getResult(settings, axioParams);
+  const { data, ...rest } = await getResult(settings, axiosParams);
 
   let response = data.choices[0].text;
 
   return convertFromHtmlCode(response || '').trim();
 }
 
-function getResult(params: CreateCompletionRequest, axioParams?: AxisParams) {
+function getResult(params: CreateCompletionRequest, axiosParams?: AxisParams) {
   const openai = createApi(getConfig().apiKey)!;
 
-  return openai.createCompletion(params, axioParams);
+  return openai.createCompletion(params, axiosParams);
 }
 
 async function pullResult(params: CreateCompletionRequest, onPartition: (part: string) => any, axioParams?: AxisParams) {
@@ -218,7 +218,7 @@ async function pullResult(params: CreateCompletionRequest, onPartition: (part: s
   const controller = new AbortController();
   const request = await openai.createCompletion({
     ...params,
-     stream: true
+    stream: true
   }, {
     responseType: 'stream',
     ...axioParams
@@ -266,7 +266,21 @@ function getData(command: string, context: ApiContext) {
     suffix = context.fileContent.substring(context.cursor.end, context.fileContent.length)
   }
 
-  const language = detectLanguage(context.file);
+  const language: Language = detectLanguage(context.file);
+
+  if (context.environment?.depends) {
+    const deps = (
+      context.environment.depends
+    );
+
+    const files = deps.map(getFileContent);
+
+    prefix = `${deps.map((file, index) => {
+      return `// ${getRelativePath(file)}\n${files[index]}`
+    }).join("\n")}
+// ${getRelativePath(context.file)}
+${prefix}`
+  }
 
   return {
     prefix,

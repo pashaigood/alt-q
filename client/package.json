@@ -1,0 +1,36 @@
+{
+  "name": "client",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "parcel src/index.html --dist-dir build --hmr-port 12334",
+    "build": "parcel build src/index.html --dist-dir build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vscode/codicons": "^0.0.33",
+    "@vscode/webview-ui-toolkit": "^1.2.2",
+    "core-js": "^3.29.1",
+    "preact": "^10.13.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-windows-ui": "^4.2.1",
+    "uuid": "^9.0.0",
+    "wouter": "^2.10.0"
+  },
+  "hmrOptions": {
+    "port": 1234
+  },
+  "devDependencies": {
+    "@parcel/transformer-sass": "^2.8.3",
+    "@types/react": "^18.0.30",
+    "@types/react-dom": "^18.0.11",
+    "@types/uuid": "^9.0.1",
+    "assert": "^2.0.0",
+    "console-browserify": "^1.2.0",
+    "process": "^0.11.10",
+    "util": "^0.12.5"
+  }
+}
