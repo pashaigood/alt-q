@@ -36,6 +36,7 @@ function createPluginProxy(plugin: Plugin): Plugin {
     get: (target: Plugin, property: keyof Plugin, receiver: any) => {
       if (property in target) {
         if (typeof target[property] === 'object' && target[property] !== null) {
+          // @ts-ignore
           return createPluginProxy(target[property]);
         }
         return Reflect.get(target, property, receiver);
