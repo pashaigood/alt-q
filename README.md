@@ -1,6 +1,10 @@
-# AltQ v0.0.5
+# AltQ v0.0.6
 
-![](images/preview.gif)
+### Say AltQ what you want to do.
+![](media/preview.gif)
+
+### Use any context for you code.
+![](media/dependencies.png)
 
 ## DISCLAIMER
 
@@ -52,17 +56,23 @@ For any questions, ideas and suggestions,
 Please feel free to get in touch.
 
 ## Release Notes
-### 0.0.1-alpha
-Base PoC
+### 0.0.6
+* Implemented dependencies window.
+* Implemented dependencies for ts/js languages.
+* Implemented plugin system to work with difference languages.
+* Rewritten panel render.
 
-### 0.0.2
-Improved the Last Request panel to display HTML.
-
-### 0.0.3
-Disabled auto tag closing on HTML.
+### 0.0.5
+Remove codex model support.
 
 ### 0.0.4
 Updated README with a gif preview.
 
-### 0.0.5
-Remove codex model support.
+### 0.0.3
+Disabled auto tag closing on HTML.
+
+### 0.0.2
+Improved the Last Request panel to display HTML.
+
+### 0.0.1-alpha
+Base PoC
