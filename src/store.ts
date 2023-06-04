@@ -15,11 +15,13 @@ export interface ReplaceStateAction extends PayloadAction<RootState> {
   type: 'REPLACE_STATE';
 }
 
+const version = 1.0;
+
 const rootReducer = (
   state: RootState | undefined,
   action: ReplaceStateAction | PayloadAction<any>
 ): RootState => {
-  if (action.type === 'REPLACE_STATE') {
+  if (action.type === 'REPLACE_STATE' && action.payload === version) {
     return (action as ReplaceStateAction).payload;
   }
 

@@ -25,6 +25,9 @@ const RequestContext: React.FC = () => {
     return api.manualDeps.changed(setManualItems);
   }, []);
 
+  console.log(manualDeps);
+  
+
   return (
     <div style={{
       display: 'flex',
@@ -33,8 +36,9 @@ const RequestContext: React.FC = () => {
       overflow: 'hidden'
     }}>
       <div style={{
-        flex: autoItems.length  ? '1' : undefined,
-        overflow: 'auto'
+        flex: autoItems.length ? '1' : undefined,
+        overflow: 'auto',
+
       }}>
         {autoItems.map(item => (
           <ListItem
@@ -52,10 +56,13 @@ const RequestContext: React.FC = () => {
           />
         ))}
       </div>
-      <div style={{
-        flex: '1',
-        overflow: 'auto'
-      }}>
+      <div
+        style={{
+          display: manualDeps.length === 0 ? 'none' : 'block',
+          flex: '1',
+          overflow: 'auto'
+        }}
+      >
         {manualDeps.map(item => (
           <ListItem
             key={item.id}
