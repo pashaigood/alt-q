@@ -8,6 +8,9 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 - Base PoC
 
+### 0.0.7
+Fixed the store version problem.
+
 ### 0.0.6
 * Implemented dependencies window.
 * Implemented dependencies for ts/js languages.

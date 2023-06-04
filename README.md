@@ -1,4 +1,4 @@
-# AltQ v0.0.6
+# AltQ
 
 ### Say AltQ what you want to do.
 ![](media/preview.gif)
@@ -56,6 +56,9 @@ For any questions, ideas and suggestions,
 Please feel free to get in touch.
 
 ## Release Notes
+### 0.0.7
+Fixed the store version problem.
+
 ### 0.0.6
 * Implemented dependencies window.
 * Implemented dependencies for ts/js languages.
